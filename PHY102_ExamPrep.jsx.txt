@@ -1,0 +1,633 @@
+import { useState, useRef, useEffect } from "react";
+
+const TOPICS = [
+  { id:1,  title:"Forces in Nature",                     unit:"Foundations",    icon:"⚛️",  desc:"4 fundamental forces, gravitational, EM, strong & weak nuclear forces" },
+  { id:2,  title:"Electrostatics",                       unit:"Electrostatics", icon:"⚡",  desc:"Electric charge, conservation, quantization, charging methods" },
+  { id:3,  title:"Coulomb's Law & Superposition",        unit:"Electrostatics", icon:"🔵",  desc:"Force between charges, superposition principle, vector addition of forces" },
+  { id:4,  title:"Electric Field & Potential",           unit:"Electrostatics", icon:"🌊",  desc:"E-field, field lines, potential V, equipotential surfaces, E = -dV/dr" },
+  { id:5,  title:"Gauss's Law",                          unit:"Electrostatics", icon:"📐",  desc:"Electric flux, Gaussian surfaces, symmetric charge distributions" },
+  { id:6,  title:"Capacitance",                          unit:"Electrostatics", icon:"🔋",  desc:"C = Q/V, parallel plate, series/parallel combos, dielectrics" },
+  { id:7,  title:"Electric Dipoles",                     unit:"Electrostatics", icon:"↔️",  desc:"Dipole moment p = qd, torque, potential & field of dipole" },
+  { id:8,  title:"Energy in Electric Fields",            unit:"Electrostatics", icon:"💡",  desc:"Energy stored in capacitors, energy density u = ε₀E²/2, work done" },
+  { id:9,  title:"Conductors & Insulators",              unit:"Electrostatics", icon:"🔌",  desc:"Conductor properties, induced charges, shielding, dielectric polarization" },
+  { id:10, title:"DC Circuits: Current, V & R",          unit:"DC Circuits",    icon:"⚙️",  desc:"Current I, drift velocity, resistivity ρ, R = ρL/A, temperature effects" },
+  { id:11, title:"Ohm's Law",                            unit:"DC Circuits",    icon:"Ω",   desc:"V = IR, ohmic vs non-ohmic, power P = IV = I²R = V²/R" },
+  { id:12, title:"Resistor Combinations",                unit:"DC Circuits",    icon:"🔗",  desc:"Series & parallel resistors, equivalent resistance, current/voltage dividers" },
+  { id:13, title:"Analysis of DC Circuits",              unit:"DC Circuits",    icon:"📊",  desc:"Kirchhoff's KVL & KCL, node voltage method, mesh analysis, Wheatstone bridge" },
+  { id:14, title:"Magnetic Fields",                      unit:"Magnetism",      icon:"🧲",  desc:"Sources of B, field lines, magnetic flux Φ = BA cosθ, Tesla unit" },
+  { id:15, title:"Lorentz Force",                        unit:"Magnetism",      icon:"💫",  desc:"F = qv×B, force on wire F = BIL, right-hand rule, circular motion in B" },
+  { id:16, title:"Biot-Savart & Ampère's Laws",          unit:"Magnetism",      icon:"🌀",  desc:"dB from current element, B for wire/loop/solenoid/toroid, Ampere's law" },
+  { id:17, title:"Magnetic Dipoles & Dielectrics",       unit:"Magnetism",      icon:"🔄",  desc:"Magnetic dipole m, torque τ = m×B, dia/para/ferromagnetism, dielectric κ" },
+  { id:18, title:"Energy in Magnetic Fields",            unit:"Magnetism",      icon:"⚡",  desc:"Energy in inductor U = ½LI², energy density u = B²/2μ₀" },
+  { id:19, title:"Electromotive Force (EMF)",            unit:"Induction",      icon:"🔋",  desc:"EMF ε, internal resistance r, terminal voltage, power, battery circuits" },
+  { id:20, title:"EM Induction & Inductance",            unit:"Induction",      icon:"🌊",  desc:"Mutual inductance M, self-inductance L, RL circuit, time constant τ = L/R" },
+  { id:21, title:"Faraday's & Lenz's Laws",              unit:"Induction",      icon:"⭕",  desc:"ε = -NdΦ/dt, Lenz's law, motional EMF ε = BLv, applications" },
+  { id:22, title:"Transformers",                         unit:"Induction",      icon:"🔄",  desc:"Step-up/down, turns ratio N₁/N₂ = V₁/V₂, ideal transformer, power transmission" },
+  { id:23, title:"Maxwell's Equations",                  unit:"EM Waves",       icon:"📡",  desc:"All 4 equations, displacement current, unification, speed of light derivation" },
+  { id:24, title:"EM Oscillations & Waves",              unit:"EM Waves",       icon:"〰️",  desc:"LC oscillations, EM wave equation, c = 1/√(μ₀ε₀), EM spectrum" },
+  { id:25, title:"AC Circuits (LCR)",                    unit:"EM Waves",       icon:"📈",  desc:"Reactance XL & XC, impedance Z, phasors, resonance, power factor cos φ" },
+];
+
+const UNIT_COLORS = {
+  Foundations:   "#8B5CF6",
+  Electrostatics:"#FF6B35",
+  "DC Circuits": "#F59E0B",
+  Magnetism:     "#EF4444",
+  Induction:     "#10B981",
+  "EM Waves":    "#4ECDC4",
+};
+const UNITS = ["Foundations","Electrostatics","DC Circuits","Magnetism","Induction","EM Waves"];
+
+async function claude(messages, system="") {
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST", headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({ model:"claude-sonnet-4-20250514", max_tokens:1000,
+      ...(system && {system}), messages })
+  });
+  const d = await res.json();
+  return (d.content||[]).map(x=>x.text||"").join("\n");
+}
+
+const DIFF_COLOR = { easy:"#10B981", medium:"#F59E0B", hard:"#EF4444" };
+const DIFF_LABEL = { easy:"🟢 Easy", medium:"🟡 Medium", hard:"🔴 Hard" };
+
+export default function App() {
+  const [screen,        setScreen]        = useState("home");
+  const [topicId,       setTopicId]       = useState(null);
+  const [tab,           setTab]           = useState("notes");
+  const [cache,         setCache]         = useState({});
+  const [loading,       setLoading]       = useState(false);
+  const [loadMsg,       setLoadMsg]       = useState("");
+  const [quizData,      setQuizData]      = useState(null);
+  const [qAnswers,      setQAnswers]      = useState({});
+  const [submitted,     setSubmitted]     = useState(false);
+  const [chatHistory,   setChatHistory]   = useState([]);
+  const [chatInput,     setChatInput]     = useState("");
+  const [chatLoading,   setChatLoading]   = useState(false);
+  const [done,          setDone]          = useState({});
+  const chatEndRef = useRef(null);
+
+  const topic = TOPICS.find(t=>t.id===topicId);
+  const col   = topic ? UNIT_COLORS[topic.unit] : "#FF6B35";
+
+  useEffect(()=>{ chatEndRef.current?.scrollIntoView({behavior:"smooth"}); },[chatHistory]);
+
+  const cached = (key) => cache[key];
+  const setC   = (key,val) => setCache(p=>({...p,[key]:val}));
+
+  async function fetchNotes(tid) {
+    const k=`${tid}_notes`; if(cached(k)) return;
+    setLoading(true); setLoadMsg("📚 Generating comprehensive university notes…");
+    const t=TOPICS.find(x=>x.id===tid);
+    const txt = await claude([{role:"user",content:
+      `Write thorough PHY 102 university exam notes on: "${t.title}" (${t.desc}).
+
+Sections (use these exact headers with ===):
+=== CORE CONCEPTS ===
+All key concepts with deep physical intuition, no hand-waving.
+
+=== KEY DEFINITIONS ===
+Every important term defined precisely as a lecturer would expect.
+
+=== ALL FORMULAS ===
+Every formula. For each: write it, define every symbol with SI unit, state when to use it, any limits/assumptions.
+
+=== IMPORTANT DERIVATIONS ===
+Key derivations a lecturer might ask (brief but complete steps).
+
+=== PHYSICAL MEANING ===
+Why does this topic matter? Real-world applications.
+
+=== EXAM TRAPS & COMMON MISTAKES ===
+What students get wrong. Tricky sign conventions, direction rules, special cases.
+
+=== EXAM TIPS ===
+What this topic's exam questions usually look like. How to approach them fast.
+
+Be thorough. University level. Don't simplify beyond accuracy.`
+    }]);
+    setC(k,txt); setLoading(false);
+  }
+
+  async function fetchExamples(tid) {
+    const k=`${tid}_ex`; if(cached(k)) return;
+    setLoading(true); setLoadMsg("🧮 Generating worked examples…");
+    const t=TOPICS.find(x=>x.id===tid);
+    const txt = await claude([{role:"user",content:
+      `Generate 4 fully worked PHY 102 exam examples on "${t.title}".
+
+Label each: EXAMPLE 1 (Easy), EXAMPLE 2 (Medium), EXAMPLE 3 (Medium-Hard), EXAMPLE 4 (Hard/Tricky).
+
+For EACH example use this structure:
+PROBLEM: [State the problem clearly with all given values]
+GIVEN: [List all given quantities with symbols and units]
+FIND: [What must be calculated]
+APPROACH: [Which formula/principle to use and why]
+SOLUTION: [Show every algebra/arithmetic step, no skipping]
+ANSWER: [Boxed final answer with correct units]
+KEY INSIGHT: [The concept this tests — what a student must understand to solve it]
+
+Make examples exam-realistic. Include vector problems, unit conversions, multi-step problems.`
+    }]);
+    setC(k,txt); setLoading(false);
+  }
+
+  async function fetchFormulas(tid) {
+    const k=`${tid}_form`; if(cached(k)) return;
+    setLoading(true); setLoadMsg("📐 Building formula reference sheet…");
+    const t=TOPICS.find(x=>x.id===tid);
+    const txt = await claude([{role:"user",content:
+      `Create a COMPLETE formula reference sheet for PHY 102: "${t.title}".
+
+For every formula include:
+• The formula (clearly written)
+• Every variable defined with SI unit
+• Physical meaning in one sentence
+• When to use it / conditions
+• Common variations or rearrangements
+
+Also include:
+- Relevant physical constants with values
+- Unit conversions relevant to this topic
+- Vector vs scalar distinctions
+- Sign conventions
+
+End with: MEMORY AIDS — mnemonics or tricks to remember key formulas fast.
+
+This must be exam-complete: a student reading only this should know every formula for this topic.`
+    }]);
+    setC(k,txt); setLoading(false);
+  }
+
+  async function fetchQuiz(tid) {
+    const k=`${tid}_quiz`;
+    if(cached(k)){ setQuizData(cached(k)); return; }
+    setLoading(true); setLoadMsg("✏️ Generating 10 university-level questions…");
+    const t=TOPICS.find(x=>x.id===tid);
+    try {
+      const raw = await claude([{role:"user",content:
+        `Generate exactly 10 PHY 102 university exam multiple choice questions on: "${t.title}".
+
+Distribution: 3 easy (concept/direct formula), 4 medium (multi-step, application), 3 hard (tricky conceptual, complex calc, edge cases, combined topics).
+
+Return ONLY a valid JSON object. No markdown. No backticks. No explanation. Just the JSON:
+{"questions":[{"id":1,"difficulty":"easy","question":"...","options":["A...","B...","C...","D..."],"answer":0,"explanation":"Full explanation: why correct answer is right AND why each wrong option is wrong."},...]}`
+      }],"Return ONLY valid JSON. No markdown, no backticks, no preamble.");
+      let parsed;
+      try { parsed=JSON.parse(raw.replace(/```json|```/g,"").trim()); }
+      catch { const m=raw.match(/\{[\s\S]*\}/); parsed=m?JSON.parse(m[0]):null; }
+      if(!parsed) throw new Error("parse fail");
+      setC(k,parsed); setQuizData(parsed);
+    } catch(e) { setQuizData({error:true}); }
+    setLoading(false);
+  }
+
+  async function openTopic(tid, initialTab="notes") {
+    setTopicId(tid); setTab(initialTab);
+    setQAnswers({}); setSubmitted(false);
+    setQuizData(null); setChatHistory([]);
+    setScreen("topic");
+    if(initialTab==="notes")     await fetchNotes(tid);
+    else if(initialTab==="ex")   await fetchExamples(tid);
+    else if(initialTab==="form") await fetchFormulas(tid);
+    else if(initialTab==="quiz") await fetchQuiz(tid);
+  }
+
+  async function switchTab(t) {
+    setTab(t);
+    if(t==="notes")     await fetchNotes(topicId);
+    else if(t==="ex")   await fetchExamples(topicId);
+    else if(t==="form") await fetchFormulas(topicId);
+    else if(t==="quiz"){ setQAnswers({}); setSubmitted(false); await fetchQuiz(topicId); }
+  }
+
+  async function sendChat() {
+    if(!chatInput.trim()) return;
+    const msg=chatInput.trim(); setChatInput("");
+    const hist=[...chatHistory,{role:"user",content:msg}];
+    setChatHistory(hist); setChatLoading(true);
+    try {
+      const reply=await claude(
+        hist.map(h=>({role:h.role,content:h.content})),
+        `You are a strict but helpful PHY 102 university exam tutor. Current topic: "${topic?.title}". 
+Give precise, exam-focused answers. Show formulas and steps. Correct mistakes firmly. 
+If student is wrong, say so and explain why. Keep answers clear and exam-relevant.`
+      );
+      setChatHistory(p=>[...p,{role:"assistant",content:reply}]);
+    } catch { setChatHistory(p=>[...p,{role:"assistant",content:"Connection error. Try again."}]); }
+    setChatLoading(false);
+  }
+
+  function submitQuiz() {
+    setSubmitted(true);
+    if(!quizData?.questions) return;
+    const score=quizData.questions.filter((q,i)=>qAnswers[i]===q.answer).length;
+    if(score>=7) setDone(p=>({...p,[topicId]:{score,total:quizData.questions.length}}));
+  }
+
+  function renderContent(text) {
+    if(!text) return null;
+    return text.split("\n").map((line,i)=>{
+      const isHeader = /^===/.test(line);
+      const isBullet = /^[•\-\*]/.test(line.trim());
+      const clean = line.replace(/^===|===$/g,"").replace(/^[•\-\*]\s*/,"").trim();
+      if(!clean) return <div key={i} style={{height:8}}/>;
+      if(isHeader) return (
+        <div key={i} style={{marginTop:20,marginBottom:10,paddingBottom:6,
+          borderBottom:`2px solid ${col}44`,color:col,fontSize:13,
+          fontWeight:"bold",letterSpacing:2,textTransform:"uppercase"}}>
+          {clean}
+        </div>
+      );
+      const formatted = clean
+        .replace(/\*\*(.*?)\*\*/g,"<strong>$1</strong>")
+        .replace(/`(.*?)`/g,`<code style="background:#ffffff18;padding:1px 5px;border-radius:4px;font-family:monospace;font-size:13px">$1</code>`);
+      return (
+        <div key={i} style={{display:"flex",gap:8,marginBottom:5,lineHeight:1.7,fontSize:14}}>
+          {isBullet && <span style={{color:col,marginTop:2,flexShrink:0}}>›</span>}
+          <span dangerouslySetInnerHTML={{__html:formatted}}/>
+        </div>
+      );
+    });
+  }
+
+  // ─── HOME ───────────────────────────────────────────────────────────────────
+  if(screen==="home") {
+    const totalDone = Object.keys(done).length;
+    return (
+      <div style={{fontFamily:"'Palatino Linotype',Georgia,serif",minHeight:"100vh",
+        background:"#080810",color:"#E8E4DC",paddingBottom:60}}>
+
+        {/* Hero */}
+        <div style={{background:"linear-gradient(160deg,#0d0d1f,#141428,#0a1628)",
+          padding:"28px 20px 20px",borderBottom:"1px solid #ffffff18",position:"relative",overflow:"hidden"}}>
+          <div style={{position:"absolute",top:-40,right:-40,width:200,height:200,
+            background:"radial-gradient(circle,#FF6B3520,transparent 70%)",borderRadius:"50%"}}/>
+          <div style={{fontSize:10,letterSpacing:5,color:"#FF6B35",marginBottom:10,textTransform:"uppercase"}}>
+            University Physics II
+          </div>
+          <h1 style={{margin:0,fontSize:30,fontWeight:"normal",letterSpacing:-1}}>
+            PHY 102
+            <span style={{display:"block",fontSize:14,color:"#8888AA",fontStyle:"italic",marginTop:4}}>
+              Electromagnetism & Waves — Exam Prep
+            </span>
+          </h1>
+
+          {/* Stats bar */}
+          <div style={{display:"flex",gap:10,marginTop:18,flexWrap:"wrap"}}>
+            {[
+              {label:"Topics",val:TOPICS.length,col:"#FF6B35"},
+              {label:"Mastered",val:totalDone,col:"#10B981"},
+              {label:"Remaining",val:TOPICS.length-totalDone,col:"#F59E0B"},
+            ].map(s=>(
+              <div key={s.label} style={{background:"#ffffff0a",border:`1px solid ${s.col}33`,
+                borderRadius:10,padding:"8px 16px",flex:1,minWidth:70,textAlign:"center"}}>
+                <div style={{fontSize:22,fontWeight:"bold",color:s.col}}>{s.val}</div>
+                <div style={{fontSize:10,color:"#666",letterSpacing:1,textTransform:"uppercase"}}>{s.label}</div>
+              </div>
+            ))}
+          </div>
+
+          {/* Progress */}
+          <div style={{marginTop:14,height:3,background:"#ffffff0f",borderRadius:2}}>
+            <div style={{height:"100%",width:`${(totalDone/TOPICS.length)*100}%`,
+              background:`linear-gradient(90deg,#FF6B35,#4ECDC4)`,
+              transition:"width 0.5s ease",borderRadius:2}}/>
+          </div>
+        </div>
+
+        {/* Unit sections */}
+        {UNITS.map(unit=>{
+          const unitTopics=TOPICS.filter(t=>t.unit===unit);
+          const uc=UNIT_COLORS[unit];
+          return (
+            <div key={unit} style={{padding:"20px 16px 0"}}>
+              <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:12}}>
+                <div style={{flex:1,height:1,background:`${uc}44`}}/>
+                <span style={{color:uc,fontSize:11,letterSpacing:3,textTransform:"uppercase",fontWeight:"bold"}}>
+                  {unit}
+                </span>
+                <div style={{flex:1,height:1,background:`${uc}44`}}/>
+              </div>
+              <div style={{display:"grid",gap:10}}>
+                {unitTopics.map(t=>{
+                  const d=done[t.id];
+                  return (
+                    <button key={t.id} onClick={()=>openTopic(t.id)}
+                      style={{background:d?`${uc}12`:"#12121e",
+                        border:`1px solid ${d?uc:"#1e1e30"}`,
+                        borderRadius:14,padding:"14px 16px",cursor:"pointer",
+                        textAlign:"left",display:"flex",alignItems:"center",
+                        gap:12,transition:"all 0.15s",color:"#E8E4DC",width:"100%"}}>
+                      <div style={{width:40,height:40,background:`${uc}18`,borderRadius:10,
+                        display:"flex",alignItems:"center",justifyContent:"center",
+                        fontSize:20,flexShrink:0}}>
+                        {t.icon}
+                      </div>
+                      <div style={{flex:1,minWidth:0}}>
+                        <div style={{fontSize:14,fontWeight:"bold",marginBottom:3}}>
+                          <span style={{color:uc,fontSize:11,marginRight:6}}>#{t.id}</span>
+                          {t.title}
+                        </div>
+                        <div style={{fontSize:11,color:"#555",lineHeight:1.4,
+                          whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
+                          {t.desc}
+                        </div>
+                      </div>
+                      <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:3,flexShrink:0}}>
+                        {d && <span style={{fontSize:11,color:"#10B981",fontWeight:"bold"}}>{d.score}/{d.total}</span>}
+                        {d && <span style={{fontSize:14}}>✅</span>}
+                        {!d && <span style={{color:uc,fontSize:18}}>›</span>}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+        <div style={{textAlign:"center",color:"#333",fontSize:10,letterSpacing:3,
+          textTransform:"uppercase",marginTop:32}}>
+          AI-Powered · University Standard · Pass Your Exam
+        </div>
+      </div>
+    );
+  }
+
+  // ─── TOPIC SCREEN ────────────────────────────────────────────────────────────
+  if(screen==="topic" && topic) {
+    const TABS=[
+      {id:"notes", label:"📖 Notes"},
+      {id:"ex",    label:"🧮 Examples"},
+      {id:"form",  label:"📐 Formulas"},
+      {id:"quiz",  label:"✏️ Quiz"},
+      {id:"chat",  label:"🤖 Tutor"},
+    ];
+
+    const contentKey = tab==="notes"?`${topicId}_notes`:tab==="ex"?`${topicId}_ex`:tab==="form"?`${topicId}_form`:null;
+    const contentText = contentKey ? cache[contentKey] : null;
+
+    const quizScore = quizData?.questions
+      ? quizData.questions.filter((q,i)=>qAnswers[i]===q.answer).length : 0;
+    const quizTotal = quizData?.questions?.length||0;
+
+    return (
+      <div style={{fontFamily:"'Palatino Linotype',Georgia,serif",minHeight:"100vh",
+        background:"#080810",color:"#E8E4DC",display:"flex",flexDirection:"column"}}>
+
+        {/* Header */}
+        <div style={{background:`linear-gradient(135deg,${col}22,${col}08)`,
+          borderBottom:`2px solid ${col}55`,padding:"16px 16px 0",flexShrink:0}}>
+          <button onClick={()=>setScreen("home")} style={{background:"none",border:"none",
+            color:col,cursor:"pointer",fontSize:12,padding:0,marginBottom:10,
+            letterSpacing:1,display:"flex",alignItems:"center",gap:4}}>
+            ← All Topics
+          </button>
+          <div style={{display:"flex",alignItems:"flex-start",gap:12,marginBottom:14}}>
+            <span style={{fontSize:28}}>{topic.icon}</span>
+            <div>
+              <div style={{fontSize:10,color:col,letterSpacing:2,textTransform:"uppercase",marginBottom:2}}>
+                {topic.unit} · Topic #{topic.id}
+              </div>
+              <h2 style={{margin:0,fontSize:18,fontWeight:"bold",lineHeight:1.3}}>{topic.title}</h2>
+            </div>
+          </div>
+          {/* Tab bar */}
+          <div style={{display:"flex",gap:0,marginBottom:-2,overflowX:"auto"}}>
+            {TABS.map(t=>(
+              <button key={t.id} onClick={()=>switchTab(t.id)}
+                style={{flexShrink:0,padding:"9px 12px",background:tab===t.id?"#080810":"transparent",
+                  border:"none",borderTop:`2px solid ${tab===t.id?col:"transparent"}`,
+                  color:tab===t.id?col:"#555",cursor:"pointer",fontSize:11,
+                  letterSpacing:0.5,fontFamily:"Georgia,serif",whiteSpace:"nowrap"}}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Content */}
+        <div style={{flex:1,overflowY:"auto",padding:"20px 16px"}}>
+
+          {/* Notes / Examples / Formulas */}
+          {["notes","ex","form"].includes(tab) && (
+            loading ? (
+              <div style={{textAlign:"center",padding:60}}>
+                <div style={{fontSize:28,marginBottom:12,animation:"spin 1s linear infinite"}}>⚙️</div>
+                <div style={{color:col,fontSize:14}}>{loadMsg}</div>
+                <div style={{color:"#444",fontSize:11,marginTop:8}}>
+                  Powered by Claude AI — university standard content
+                </div>
+                <style>{`@keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}`}</style>
+              </div>
+            ) : contentText ? (
+              <div style={{background:"#0e0e1c",borderRadius:16,padding:20,lineHeight:1.8,fontSize:14}}>
+                {renderContent(contentText)}
+              </div>
+            ) : (
+              <div style={{color:"#555",textAlign:"center",padding:40}}>Tap a tab to load content.</div>
+            )
+          )}
+
+          {/* Quiz */}
+          {tab==="quiz" && (
+            <div>
+              {loading && (
+                <div style={{textAlign:"center",padding:60}}>
+                  <div style={{fontSize:28,marginBottom:12}}>✏️</div>
+                  <div style={{color:col,fontSize:14}}>{loadMsg}</div>
+                </div>
+              )}
+              {!loading && quizData?.error && (
+                <div style={{background:"#1e0a0a",border:"1px solid #EF4444",borderRadius:12,
+                  padding:20,textAlign:"center"}}>
+                  <div style={{color:"#EF4444",marginBottom:10}}>Failed to generate quiz.</div>
+                  <button onClick={()=>fetchQuiz(topicId)}
+                    style={{background:"#EF4444",border:"none",borderRadius:8,padding:"10px 20px",
+                      color:"#fff",cursor:"pointer",fontSize:13}}>
+                    Try Again
+                  </button>
+                </div>
+              )}
+              {!loading && quizData?.questions && (
+                <>
+                  {/* Score banner */}
+                  {submitted && (
+                    <div style={{background:quizScore>=7?`#10B98118`:`#EF444418`,
+                      border:`1px solid ${quizScore>=7?"#10B981":"#EF4444"}`,
+                      borderRadius:14,padding:16,marginBottom:20,textAlign:"center"}}>
+                      <div style={{fontSize:28,marginBottom:4}}>
+                        {quizScore===10?"🏆":quizScore>=7?"🎉":quizScore>=5?"👍":"📚"}
+                      </div>
+                      <div style={{fontSize:22,fontWeight:"bold",
+                        color:quizScore>=7?"#10B981":"#EF4444"}}>
+                        {quizScore} / {quizTotal}
+                      </div>
+                      <div style={{fontSize:12,color:"#888",marginTop:4}}>
+                        {quizScore===10?"Perfect! You know this topic cold.":
+                         quizScore>=7?"Well done! Review the ones you missed.":
+                         quizScore>=5?"Decent. Study the explanations carefully.":
+                         "Review the notes and try again — you need this!"}
+                      </div>
+                    </div>
+                  )}
+
+                  {quizData.questions.map((q,qi)=>{
+                    const answered = qAnswers[qi]!==undefined;
+                    const isRight  = qAnswers[qi]===q.answer;
+                    let borderCol  = "#1e1e30";
+                    if(submitted) borderCol = isRight ? "#10B981" : "#EF4444";
+                    else if(answered) borderCol = col;
+                    return (
+                      <div key={qi} style={{background:"#0e0e1c",border:`1px solid ${borderCol}`,
+                        borderRadius:14,padding:18,marginBottom:14,transition:"border 0.2s"}}>
+                        <div style={{display:"flex",justifyContent:"space-between",
+                          alignItems:"flex-start",marginBottom:12,gap:8}}>
+                          <span style={{color:col,fontWeight:"bold",fontSize:13,flexShrink:0}}>Q{qi+1}</span>
+                          <span style={{fontSize:10,padding:"3px 8px",borderRadius:6,
+                            background:`${DIFF_COLOR[q.difficulty]}22`,
+                            color:DIFF_COLOR[q.difficulty],letterSpacing:1,flexShrink:0}}>
+                            {DIFF_LABEL[q.difficulty]}
+                          </span>
+                        </div>
+                        <p style={{margin:"0 0 14px",fontSize:14,lineHeight:1.7,fontStyle:"italic"}}>
+                          {q.question}
+                        </p>
+                        <div style={{display:"grid",gap:8}}>
+                          {q.options.map((opt,oi)=>{
+                            let bg="#151525",bdr="1px solid #1e1e30",fc="#aaa";
+                            if(submitted){
+                              if(oi===q.answer){bg=`#10B98120`;bdr="1px solid #10B981";fc="#10B981";}
+                              else if(qAnswers[qi]===oi){bg="#EF444420";bdr="1px solid #EF4444";fc="#EF4444";}
+                            } else if(qAnswers[qi]===oi){
+                              bg=`${col}18`;bdr=`1px solid ${col}`;fc=col;
+                            }
+                            return (
+                              <button key={oi} onClick={()=>!submitted&&setQAnswers(p=>({...p,[qi]:oi}))}
+                                style={{background:bg,border:bdr,borderRadius:10,
+                                  padding:"10px 14px",cursor:submitted?"default":"pointer",
+                                  textAlign:"left",color:fc,fontSize:13,
+                                  fontFamily:"Georgia,serif",transition:"all 0.15s",
+                                  display:"flex",gap:10,alignItems:"flex-start"}}>
+                                <span style={{flexShrink:0,fontWeight:"bold",fontSize:11}}>
+                                  {["A","B","C","D"][oi]}.
+                                </span>
+                                <span>{opt}</span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        {submitted && (
+                          <div style={{marginTop:12,padding:"12px 14px",
+                            background:"#080810",borderRadius:8,fontSize:12,
+                            color:"#AAA",lineHeight:1.6,borderLeft:`3px solid ${col}`}}>
+                            <strong style={{color:col}}>Explanation: </strong>
+                            {q.explanation}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                  {!submitted ? (
+                    <button onClick={submitQuiz}
+                      disabled={Object.keys(qAnswers).length<quizTotal}
+                      style={{width:"100%",padding:16,borderRadius:14,border:"none",
+                        background:Object.keys(qAnswers).length<quizTotal
+                          ?"#1e1e30":`linear-gradient(135deg,${col},${col}99)`,
+                        color:Object.keys(qAnswers).length<quizTotal?"#444":"#fff",
+                        fontSize:14,cursor:Object.keys(qAnswers).length<quizTotal?"not-allowed":"pointer",
+                        fontFamily:"Georgia,serif",fontWeight:"bold"}}>
+                      {Object.keys(qAnswers).length<quizTotal
+                        ?`Answer all ${quizTotal} questions (${Object.keys(qAnswers).length}/${quizTotal})`
+                        :"Submit & See Results →"}
+                    </button>
+                  ) : (
+                    <div style={{display:"grid",gap:10,gridTemplateColumns:"1fr 1fr",marginTop:4}}>
+                      <button onClick={()=>{setQAnswers({});setSubmitted(false);setQuizData(null);fetchQuiz(topicId);}}
+                        style={{padding:14,borderRadius:14,border:`1px solid ${col}`,
+                          background:"transparent",color:col,fontSize:13,cursor:"pointer",
+                          fontFamily:"Georgia,serif"}}>
+                        New Quiz 🔄
+                      </button>
+                      <button onClick={()=>setScreen("home")}
+                        style={{padding:14,borderRadius:14,border:`1px solid #333`,
+                          background:"#0e0e1c",color:"#aaa",fontSize:13,cursor:"pointer",
+                          fontFamily:"Georgia,serif"}}>
+                        ← Topics
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
+          {/* AI Tutor Chat */}
+          {tab==="chat" && (
+            <div style={{display:"flex",flexDirection:"column",height:"100%",gap:12}}>
+              <div style={{background:`${col}14`,border:`1px solid ${col}33`,
+                borderRadius:12,padding:14,fontSize:12,color:"#888",lineHeight:1.6}}>
+                🤖 <strong style={{color:col}}>AI Tutor — {topic.title}</strong>
+                <br/>Ask anything: "Explain Gauss's law", "Solve this problem for me", 
+                "What's the difference between X and Y?", "What does this formula mean?"
+              </div>
+
+              {/* Messages */}
+              <div style={{display:"flex",flexDirection:"column",gap:10,minHeight:200}}>
+                {chatHistory.length===0 && (
+                  <div style={{color:"#333",textAlign:"center",padding:30,fontSize:13}}>
+                    Ask your first question 👇
+                  </div>
+                )}
+                {chatHistory.map((m,i)=>(
+                  <div key={i} style={{display:"flex",justifyContent:m.role==="user"?"flex-end":"flex-start"}}>
+                    <div style={{maxWidth:"85%",padding:"12px 16px",borderRadius:14,
+                      background:m.role==="user"?`${col}22`:"#0e0e1c",
+                      border:`1px solid ${m.role==="user"?col+"44":"#1e1e30"}`,
+                      fontSize:13,lineHeight:1.7,
+                      borderBottomRightRadius:m.role==="user"?4:14,
+                      borderBottomLeftRadius:m.role==="assistant"?4:14,
+                      whiteSpace:"pre-wrap"}}>
+                      {m.content}
+                    </div>
+                  </div>
+                ))}
+                {chatLoading && (
+                  <div style={{display:"flex",justifyContent:"flex-start"}}>
+                    <div style={{padding:"12px 16px",borderRadius:14,background:"#0e0e1c",
+                      border:"1px solid #1e1e30",color:col,fontSize:13}}>
+                      Thinking…
+                    </div>
+                  </div>
+                )}
+                <div ref={chatEndRef}/>
+              </div>
+
+              {/* Input */}
+              <div style={{display:"flex",gap:8,position:"sticky",bottom:0,
+                background:"#080810",paddingTop:8}}>
+                <input value={chatInput} onChange={e=>setChatInput(e.target.value)}
+                  onKeyDown={e=>e.key==="Enter"&&!e.shiftKey&&sendChat()}
+                  placeholder={`Ask about ${topic.title}…`}
+                  style={{flex:1,background:"#0e0e1c",border:`1px solid ${col}44`,
+                    borderRadius:12,padding:"12px 14px",color:"#E8E4DC",fontSize:13,
+                    fontFamily:"Georgia,serif",outline:"none"}}/>
+                <button onClick={sendChat} disabled={chatLoading||!chatInput.trim()}
+                  style={{background:chatLoading||!chatInput.trim()?"#1e1e30":`linear-gradient(135deg,${col},${col}99)`,
+                    border:"none",borderRadius:12,padding:"0 18px",
+                    color:chatLoading||!chatInput.trim()?"#444":"#fff",
+                    cursor:chatLoading||!chatInput.trim()?"not-allowed":"pointer",
+                    fontSize:16,transition:"all 0.15s"}}>
+                  ›
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  return null;
+}
