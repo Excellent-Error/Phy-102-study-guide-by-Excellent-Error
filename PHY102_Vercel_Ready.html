@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PHY 102 — OAU Study Master</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0a0c14;
+    --surface: #111420;
+    --surface2: #1a1f30;
+    --border: #252a3d;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --accent3: #06b6d4;
+    --gold: #f59e0b;
+    --green: #10b981;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --glow: 0 0 40px rgba(79,142,247,0.15);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* HEADER */
+  .header {
+    background: linear-gradient(135deg, #0d1117 0%, #0a0c14 50%, #0d1020 100%);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(20px);
+  }
+
+  .header-inner {
+    max-width: 1400px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    height: 60px;
+  }
+
+  .logo {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    white-space: nowrap;
+  }
+
+  .badge {
+    background: rgba(79,142,247,0.12);
+    border: 1px solid rgba(79,142,247,0.3);
+    color: var(--accent);
+    font-size: 0.65rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .header-tabs {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 4px;
+  }
+
+  .tab-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 6px 14px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .tab-btn.active {
+    background: var(--accent);
+    color: white;
+  }
+
+  .tab-btn:hover:not(.active) {
+    background: var(--surface2);
+    color: var(--text);
+  }
+
+  /* MAIN */
+  .main {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1.5rem 2rem;
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 1.5rem;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    position: sticky;
+    top: 76px;
+    height: calc(100vh - 92px);
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .sidebar::-webkit-scrollbar { width: 4px; }
+  .sidebar::-webkit-scrollbar-track { background: transparent; }
+  .sidebar::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  .sidebar-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .sidebar-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding: 0 0.5rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .topic-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .topic-item {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 8px 12px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.18s;
+    border: 1px solid transparent;
+    font-size: 0.78rem;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+
+  .topic-item:hover {
+    background: var(--surface);
+    color: var(--text);
+    border-color: var(--border);
+  }
+
+  .topic-item.active {
+    background: rgba(79,142,247,0.1);
+    color: var(--accent);
+    border-color: rgba(79,142,247,0.25);
+  }
+
+  .topic-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    min-width: 18px;
+  }
+
+  /* CONTENT AREA */
+  .content {
+    min-height: 0;
+  }
+
+  /* PANELS */
+  .panel {
+    display: none;
+  }
+  .panel.active {
+    display: block;
+  }
+
+  /* TEACH PANEL */
+  .topic-header {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  .topic-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text);
+    flex: 1;
+  }
+
+  .topic-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .btn {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .btn:hover { background: var(--border); }
+
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
+  }
+
+  .btn-primary:hover {
+    background: #3b7ce6;
+    border-color: #3b7ce6;
+  }
+
+  .btn-gold {
+    background: rgba(245,158,11,0.12);
+    border-color: rgba(245,158,11,0.3);
+    color: var(--gold);
+  }
+
+  .btn-gold:hover {
+    background: rgba(245,158,11,0.2);
+  }
+
+  .btn-purple {
+    background: rgba(124,58,237,0.12);
+    border-color: rgba(124,58,237,0.3);
+    color: #a78bfa;
+  }
+
+  .btn-purple:hover { background: rgba(124,58,237,0.2); }
+
+  /* AI RESPONSE BOX */
+  .ai-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    min-height: 200px;
+    position: relative;
+  }
+
+  .ai-box-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--accent3);
+    font-family: 'Space Mono', monospace;
+    letter-spacing: 0.05em;
+  }
+
+  .ai-dot {
+    width: 8px; height: 8px;
+    background: var(--green);
+    border-radius: 50%;
+    box-shadow: 0 0 8px var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  .ai-content {
+    font-size: 0.875rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  .ai-content h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent);
+    margin: 1.2rem 0 0.6rem;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .ai-content h3 {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--accent3);
+    margin: 1rem 0 0.5rem;
+  }
+
+  .ai-content p { margin-bottom: 0.8rem; }
+
+  .ai-content ul, .ai-content ol {
+    margin: 0.5rem 0 0.8rem 1.2rem;
+  }
+
+  .ai-content li { margin-bottom: 0.4rem; }
+
+  .ai-content .formula {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 8px;
+    padding: 0.8rem 1.2rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.85rem;
+    color: #fbbf24;
+    margin: 0.8rem 0;
+    overflow-x: auto;
+  }
+
+  .ai-content .example-box {
+    background: rgba(16,185,129,0.06);
+    border: 1px solid rgba(16,185,129,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+  }
+
+  .ai-content .example-box .ex-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-content .oau-box {
+    background: rgba(245,158,11,0.06);
+    border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+  }
+
+  .ai-content .oau-box .oau-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .ai-content .tip-box {
+    background: rgba(124,58,237,0.06);
+    border: 1px solid rgba(124,58,237,0.2);
+    border-radius: 10px;
+    padding: 1rem 1.2rem;
+    margin: 0.8rem 0;
+  }
+
+  .ai-content .tip-box .tip-label {
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #a78bfa;
+    font-weight: 700;
+    font-family: 'Space Mono', monospace;
+    margin-bottom: 0.5rem;
+  }
+
+  .loading {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-style: italic;
+    padding: 2rem;
+    justify-content: center;
+  }
+
+  .spinner {
+    width: 20px; height: 20px;
+    border: 2px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    flex-shrink: 0;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* CHAT PANEL */
+  .chat-container {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+  }
+
+  .chat-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .chat-title {
+    font-family: 'Syne', sans-serif;
+    font-weight: 700;
+    font-size: 0.95rem;
+  }
+
+  .chat-subtitle {
+    font-size: 0.72rem;
+    color: var(--muted);
+  }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+  }
+
+  .message {
+    max-width: 85%;
+    border-radius: 12px;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+
+  .message.user {
+    background: var(--accent);
+    color: white;
+    align-self: flex-end;
+    border-bottom-right-radius: 4px;
+  }
+
+  .message.ai {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    align-self: flex-start;
+    border-bottom-left-radius: 4px;
+  }
+
+  .message.ai h2, .message.ai h3 {
+    font-family: 'Syne', sans-serif;
+    color: var(--accent);
+    margin: 0.5rem 0 0.3rem;
+  }
+
+  .message.ai h2 { font-size: 0.95rem; }
+  .message.ai h3 { font-size: 0.85rem; color: var(--accent3); }
+
+  .message.ai .formula {
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--accent);
+    border-radius: 6px;
+    padding: 0.5rem 0.8rem;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.8rem;
+    color: #fbbf24;
+    margin: 0.5rem 0;
+    overflow-x: auto;
+  }
+
+  .message.ai ul, .message.ai ol {
+    margin: 0.3rem 0 0.3rem 1rem;
+  }
+
+  .message.ai li { margin-bottom: 0.25rem; }
+  .message.ai p { margin-bottom: 0.4rem; }
+
+  .chat-input-area {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+  }
+
+  .chat-input {
+    flex: 1;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.85rem;
+    resize: none;
+    outline: none;
+    transition: border-color 0.2s;
+    min-height: 42px;
+    max-height: 120px;
+  }
+
+  .chat-input:focus { border-color: var(--accent); }
+  .chat-input::placeholder { color: var(--muted); }
+
+  .send-btn {
+    background: var(--accent);
+    border: none;
+    border-radius: 10px;
+    width: 42px; height: 42px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    flex-shrink: 0;
+  }
+
+  .send-btn:hover { background: #3b7ce6; transform: scale(1.05); }
+  .send-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+  .send-btn svg { width: 18px; height: 18px; fill: white; }
+
+  /* QUIZ PANEL */
+  .quiz-setup {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+  }
+
+  .quiz-setup h2 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+  }
+
+  .quiz-setup p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-options {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .quiz-option-btn {
+    background: var(--surface2);
+    border: 2px solid var(--border);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 10px 20px;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .quiz-option-btn:hover, .quiz-option-btn.selected {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(79,142,247,0.08);
+  }
+
+  .quiz-area {
+    display: none;
+  }
+
+  .quiz-area.active {
+    display: block;
+  }
+
+  .question-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .q-number {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .q-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    font-weight: 500;
+    margin-bottom: 1.2rem;
+    color: var(--text);
+  }
+
+  .q-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .q-option {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.18s;
+    text-align: left;
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .q-option:hover:not(:disabled) {
+    border-color: var(--accent);
+    background: rgba(79,142,247,0.06);
+  }
+
+  .q-option:disabled { cursor: not-allowed; }
+
+  .q-option.correct {
+    border-color: var(--green);
+    background: rgba(16,185,129,0.1);
+    color: var(--green);
+  }
+
+  .q-option.wrong {
+    border-color: var(--red);
+    background: rgba(239,68,68,0.08);
+    color: var(--red);
+  }
+
+  .opt-letter {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    background: var(--border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .q-option.correct .opt-letter { background: var(--green); color: white; }
+  .q-option.wrong .opt-letter { background: var(--red); color: white; }
+
+  .q-explanation {
+    margin-top: 1rem;
+    padding: 0.9rem 1.1rem;
+    background: rgba(79,142,247,0.06);
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    color: var(--text);
+    line-height: 1.6;
+    display: none;
+  }
+
+  .q-explanation.show { display: block; }
+
+  .quiz-score {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    display: none;
+  }
+
+  .score-big {
+    font-family: 'Syne', sans-serif;
+    font-size: 3.5rem;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  /* SUMMARY section */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .summary-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.2rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .summary-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: var(--glow);
+  }
+
+  .summary-card-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.6rem;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+
+  .summary-card-title {
+    font-family: 'Syne', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+    line-height: 1.3;
+  }
+
+  .summary-card-tag {
+    display: inline-block;
+    font-size: 0.6rem;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .tag-elec { background: rgba(79,142,247,0.15); color: var(--accent); }
+  .tag-mag { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .tag-em { background: rgba(6,182,212,0.15); color: var(--accent3); }
+  .tag-dc { background: rgba(245,158,11,0.15); color: var(--gold); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .main { grid-template-columns: 1fr; }
+    .sidebar { position: relative; height: auto; top: 0; }
+    .topic-list { flex-direction: row; flex-wrap: wrap; }
+    .topic-item { font-size: 0.7rem; }
+  }
+
+  @media (max-width: 600px) {
+    .header-inner { gap: 0.75rem; }
+    .main { padding: 1rem; }
+    .header-tabs { display: none; }
+    .tab-btn { font-size: 0.65rem; padding: 5px 10px; }
+  }
+
+  .intro-hero {
+    background: linear-gradient(135deg, rgba(79,142,247,0.08), rgba(6,182,212,0.04));
+    border: 1px solid rgba(79,142,247,0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .intro-hero::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -10%;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(79,142,247,0.08), transparent 70%);
+    pointer-events: none;
+  }
+
+  .intro-hero h1 {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.6rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+
+  .intro-hero p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    line-height: 1.6;
+    max-width: 600px;
+  }
+
+  .intro-stats {
+    display: flex;
+    gap: 2rem;
+    margin-top: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .intro-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .intro-stat-val {
+    font-family: 'Syne', sans-serif;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .intro-stat-label {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .quick-actions {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-inner">
+    <div class="logo">⚡ PHY 102</div>
+    <div class="badge">OAU • General Physics II</div>
+    <div class="header-tabs" style="margin-left:auto">
+      <button class="tab-btn active" onclick="showPanel('overview')">Overview</button>
+      <button class="tab-btn" onclick="showPanel('teach')">📚 Study</button>
+      <button class="tab-btn" onclick="showPanel('chat')">🤖 Ask AI</button>
+      <button class="tab-btn" onclick="showPanel('quiz')">⚡ Quiz</button>
+    </div>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Electrostatics</div>
+      <ul class="topic-list">
+        <li class="topic-item" onclick="selectTopic(1, 'Forces in Nature')"><span class="topic-num">01</span> Forces in Nature</li>
+        <li class="topic-item" onclick="selectTopic(2, 'Electrostatics & Electric Charge')"><span class="topic-num">02</span> Electrostatics & Charge</li>
+        <li class="topic-item" onclick="selectTopic(3, 'Coulomb\'s Law & Superposition')"><span class="topic-num">03</span> Coulomb's Law</li>
+        <li class="topic-item" onclick="selectTopic(4, 'Electric Field & Potential')"><span class="topic-num">04</span> Electric Field & Potential</li>
+        <li class="topic-item" onclick="selectTopic(5, 'Gauss\'s Law')"><span class="topic-num">05</span> Gauss's Law</li>
+        <li class="topic-item" onclick="selectTopic(6, 'Capacitance')"><span class="topic-num">06</span> Capacitance</li>
+        <li class="topic-item" onclick="selectTopic(7, 'Electric Dipoles')"><span class="topic-num">07</span> Electric Dipoles</li>
+        <li class="topic-item" onclick="selectTopic(8, 'Energy in Electric Fields')"><span class="topic-num">08</span> Energy in E-Fields</li>
+        <li class="topic-item" onclick="selectTopic(9, 'Conductors & Insulators')"><span class="topic-num">09</span> Conductors & Insulators</li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">DC Circuits</div>
+      <ul class="topic-list">
+        <li class="topic-item" onclick="selectTopic(10, 'DC Circuits: Current, Voltage & Resistance')"><span class="topic-num">10</span> Current, Voltage & R</li>
+        <li class="topic-item" onclick="selectTopic(11, 'Ohm\'s Law')"><span class="topic-num">11</span> Ohm's Law</li>
+        <li class="topic-item" onclick="selectTopic(12, 'Resistor Combinations')"><span class="topic-num">12</span> Resistor Combinations</li>
+        <li class="topic-item" onclick="selectTopic(13, 'Analysis of DC Circuits')"><span class="topic-num">13</span> DC Circuit Analysis</li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Magnetism</div>
+      <ul class="topic-list">
+        <li class="topic-item" onclick="selectTopic(14, 'Magnetic Fields')"><span class="topic-num">14</span> Magnetic Fields</li>
+        <li class="topic-item" onclick="selectTopic(15, 'Lorentz Force')"><span class="topic-num">15</span> Lorentz Force</li>
+        <li class="topic-item" onclick="selectTopic(16, 'Biot-Savart & Ampère\'s Laws')"><span class="topic-num">16</span> Biot-Savart & Ampère</li>
+        <li class="topic-item" onclick="selectTopic(17, 'Magnetic Dipoles & Dielectrics')"><span class="topic-num">17</span> Magnetic Dipoles</li>
+        <li class="topic-item" onclick="selectTopic(18, 'Energy in Magnetic Fields')"><span class="topic-num">18</span> Energy in B-Fields</li>
+        <li class="topic-item" onclick="selectTopic(19, 'Electromotive Force (EMF)')"><span class="topic-num">19</span> EMF</li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Electromagnetic</div>
+      <ul class="topic-list">
+        <li class="topic-item" onclick="selectTopic(20, 'Electromagnetic Induction & Inductance')"><span class="topic-num">20</span> EM Induction</li>
+        <li class="topic-item" onclick="selectTopic(21, 'Faraday\'s & Lenz\'s Laws')"><span class="topic-num">21</span> Faraday & Lenz Laws</li>
+        <li class="topic-item" onclick="selectTopic(22, 'Transformers')"><span class="topic-num">22</span> Transformers</li>
+        <li class="topic-item" onclick="selectTopic(23, 'Maxwell\'s Equations')"><span class="topic-num">23</span> Maxwell's Equations</li>
+        <li class="topic-item" onclick="selectTopic(24, 'EM Oscillations & Waves')"><span class="topic-num">24</span> EM Waves</li>
+        <li class="topic-item" onclick="selectTopic(25, 'AC Circuits: RLC')"><span class="topic-num">25</span> AC Circuits (RLC)</li>
+      </ul>
+    </div>
+  </aside>
+
+  <!-- CONTENT -->
+  <main class="content">
+
+    <!-- OVERVIEW PANEL -->
+    <div class="panel active" id="panel-overview">
+      <div class="intro-hero">
+        <h1>PHY 102 — General Physics II<br><span style="color:var(--accent)">Ace Your OAU Exam 🎯</span></h1>
+        <p>Your AI-powered study companion for PHY 102 at Obafemi Awolowo University. Get full explanations, worked examples, OAU-style past questions, and instant answers — all in one place.</p>
+        <div class="intro-stats">
+          <div class="intro-stat"><div class="intro-stat-val">25</div><div class="intro-stat-label">Topics Covered</div></div>
+          <div class="intro-stat"><div class="intro-stat-val">∞</div><div class="intro-stat-label">AI Explanations</div></div>
+          <div class="intro-stat"><div class="intro-stat-val">OAU</div><div class="intro-stat-label">Past Questions</div></div>
+          <div class="intro-stat"><div class="intro-stat-val">⚡</div><div class="intro-stat-label">Quiz Mode</div></div>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="btn btn-primary" onclick="showPanel('teach'); selectTopic(2,'Electrostatics & Electric Charge')">▶ Start Learning</button>
+        <button class="btn btn-gold" onclick="showPanel('quiz')">⚡ Take a Quiz</button>
+        <button class="btn btn-purple" onclick="showPanel('chat')">🤖 Ask the AI Tutor</button>
+      </div>
+
+      <div class="sidebar-label" style="padding:0;margin-bottom:0.75rem">All Topics at a Glance</div>
+      <div class="summary-grid">
+        <div class="summary-card" onclick="showPanel('teach'); selectTopic(2,'Electrostatics & Electric Charge')">
+          <div class="summary-card-num">TOPIC 1–9</div>
+          <div class="summary-card-title">Electrostatics & Fields</div>
+          <span class="summary-card-tag tag-elec">Electrostatics</span>
+        </div>
+        <div class="summary-card" onclick="showPanel('teach'); selectTopic(10,'DC Circuits: Current, Voltage & Resistance')">
+          <div class="summary-card-num">TOPIC 10–13</div>
+          <div class="summary-card-title">DC Circuits</div>
+          <span class="summary-card-tag tag-dc">Circuits</span>
+        </div>
+        <div class="summary-card" onclick="showPanel('teach'); selectTopic(14,'Magnetic Fields')">
+          <div class="summary-card-num">TOPIC 14–19</div>
+          <div class="summary-card-title">Magnetism & EMF</div>
+          <span class="summary-card-tag tag-mag">Magnetism</span>
+        </div>
+        <div class="summary-card" onclick="showPanel('teach'); selectTopic(20,'Electromagnetic Induction & Inductance')">
+          <div class="summary-card-num">TOPIC 20–25</div>
+          <div class="summary-card-title">EM Waves & AC Circuits</div>
+          <span class="summary-card-tag tag-em">Electromagnetics</span>
+        </div>
+      </div>
+
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.2rem;margin-top:1rem;font-size:0.82rem;color:var(--muted);line-height:1.7">
+        <strong style="color:var(--gold)">📌 How to use this app:</strong> Click any topic in the sidebar → Click <strong style="color:var(--accent)">"Teach Me This Topic"</strong> to get full AI notes with examples and OAU past questions. Use <strong style="color:var(--accent)">Ask AI</strong> to ask any question. Use <strong style="color:var(--accent)">Quiz</strong> to test yourself. 
+      </div>
+    </div>
+
+    <!-- TEACH PANEL -->
+    <div class="panel" id="panel-teach">
+      <div class="topic-header">
+        <div>
+          <div style="font-size:0.7rem;color:var(--muted);font-family:'Space Mono',monospace;margin-bottom:4px">SELECTED TOPIC</div>
+          <div class="topic-title" id="current-topic-title">Select a topic from the sidebar →</div>
+        </div>
+        <div class="topic-actions">
+          <button class="btn btn-primary" onclick="teachTopic()" id="teach-btn">📚 Teach Me This Topic</button>
+          <button class="btn btn-gold" onclick="getOAUQuestions()" id="oau-btn">🏛 OAU Past Qs</button>
+          <button class="btn btn-purple" onclick="getQuickSummary()" id="summary-btn">⚡ Quick Summary</button>
+        </div>
+      </div>
+
+      <div class="ai-box" id="teach-output">
+        <div class="loading" id="teach-placeholder">
+          <span style="font-size:2rem">👈</span>
+          <span>Select a topic from the sidebar, then click "Teach Me This Topic" to get comprehensive notes with examples.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHAT PANEL -->
+    <div class="panel" id="panel-chat">
+      <div class="chat-container">
+        <div class="chat-header">
+          <div class="ai-dot"></div>
+          <div>
+            <div class="chat-title">PHY 102 AI Tutor</div>
+            <div class="chat-subtitle">Ask anything about your syllabus • OAU General Physics II</div>
+          </div>
+        </div>
+        <div class="chat-messages" id="chat-messages">
+          <div class="message ai">
+            👋 Hello! I'm your PHY 102 tutor for OAU. I know everything on your syllabus — Electrostatics, DC Circuits, Magnetism, Maxwell's Equations, AC Circuits, and more.<br><br>
+            Ask me <strong>anything</strong>: "Explain Gauss's Law with an example", "What is the difference between EMF and terminal voltage?", "Solve this capacitor problem…", or "What OAU usually asks about Faraday's law?"<br><br>
+            <em style="color:var(--muted);font-size:0.78rem">Tip: Be specific for best results!</em>
+          </div>
+        </div>
+        <div class="chat-input-area">
+          <textarea class="chat-input" id="chat-input" placeholder="Ask a PHY 102 question..." rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendChat()}"
+            oninput="this.style.height='42px';this.style.height=this.scrollHeight+'px'"
+          ></textarea>
+          <button class="send-btn" onclick="sendChat()" id="send-btn">
+            <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUIZ PANEL -->
+    <div class="panel" id="panel-quiz">
+      <div class="quiz-setup" id="quiz-setup">
+        <h2>⚡ PHY 102 Quiz Mode</h2>
+        <p>Test your knowledge with AI-generated questions based on your OAU syllabus. Get instant feedback and explanations.</p>
+        <div class="quiz-options">
+          <button class="quiz-option-btn selected" id="diff-easy" onclick="selectDiff('easy')">🟢 Conceptual</button>
+          <button class="quiz-option-btn" id="diff-med" onclick="selectDiff('medium')">🟡 Calculation</button>
+          <button class="quiz-option-btn" id="diff-hard" onclick="selectDiff('hard')">🔴 OAU Exam Level</button>
+        </div>
+        <div style="margin-bottom:1.5rem">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:0.75rem">Choose topic:</div>
+          <select id="quiz-topic-select" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-family:'Inter',sans-serif;font-size:0.82rem;outline:none;cursor:pointer">
+            <option value="all">🎲 All Topics (Random)</option>
+            <option value="Electrostatics and Electric Charge">Electrostatics & Electric Charge</option>
+            <option value="Coulomb's Law and superposition principle">Coulomb's Law</option>
+            <option value="Electric field and electric potential">Electric Field & Potential</option>
+            <option value="Gauss's Law">Gauss's Law</option>
+            <option value="Capacitance and capacitors">Capacitance</option>
+            <option value="Electric dipoles">Electric Dipoles</option>
+            <option value="Energy in electric fields">Energy in E-Fields</option>
+            <option value="DC circuits including Ohm's law, current, voltage, resistance, and Kirchhoff's laws">DC Circuits & Ohm's Law</option>
+            <option value="Resistor combinations in series and parallel">Resistor Combinations</option>
+            <option value="Magnetic fields and Lorentz force">Magnetic Fields & Lorentz Force</option>
+            <option value="Biot-Savart law and Ampere's law">Biot-Savart & Ampère's Law</option>
+            <option value="Electromagnetic induction, Faraday's law, and Lenz's law">EM Induction & Faraday's Law</option>
+            <option value="Transformers (step up and step down)">Transformers</option>
+            <option value="Maxwell's equations and electromagnetic waves">Maxwell's Equations</option>
+            <option value="AC circuits with RLC components">AC Circuits (RLC)</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="font-size:0.9rem;padding:12px 32px" onclick="startQuiz()">Start Quiz (5 Questions)</button>
+      </div>
+
+      <div class="quiz-area" id="quiz-area">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+          <div id="quiz-progress" style="font-family:'Space Mono',monospace;font-size:0.72rem;color:var(--muted)">Question 1 of 5</div>
+          <button class="btn" onclick="resetQuiz()">✕ End Quiz</button>
+        </div>
+        <div id="questions-container"></div>
+        <div style="text-align:center;margin-top:1rem" id="quiz-next-area" style="display:none">
+          <button class="btn btn-primary" onclick="nextQuestion()" id="next-q-btn" style="display:none;padding:10px 32px">Next Question →</button>
+          <button class="btn btn-gold" onclick="showFinalScore()" id="finish-btn" style="display:none;padding:10px 32px">See Final Score 🏆</button>
+        </div>
+      </div>
+
+      <div class="quiz-score" id="quiz-score">
+        <div style="margin-bottom:0.5rem;color:var(--muted);font-size:0.8rem;font-family:'Space Mono',monospace;letter-spacing:0.08em">FINAL SCORE</div>
+        <div class="score-big" id="score-display">4/5</div>
+        <div id="score-message" style="font-family:'Syne',sans-serif;font-size:1rem;margin:0.5rem 0 1.5rem;color:var(--text)"></div>
+        <div style="display:flex;gap:0.75rem;justify-content:center">
+          <button class="btn btn-primary" onclick="startQuiz()">Try Again</button>
+          <button class="btn" onclick="resetQuiz()">Change Topic</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<script>
+  // ─── STATE ───────────────────────────────────────────────────────────────
+  let currentTopic = null;
+  let currentTopicName = null;
+  let quizDifficulty = 'easy';
+  let quizQuestions = [];
+  let currentQ = 0;
+  let score = 0;
+  let answered = false;
+  let chatHistory = [];
+
+  const SYSTEM_PROMPT = `You are an expert PHY 102 tutor for students at Obafemi Awolowo University (OAU), Ile-Ife, Nigeria. The course is General Physics II.
+
+The syllabus covers:
+1. Forces in nature
+2. Electrostatics (electric charge, properties, methods of charging)
+3. Coulomb's law and superposition
+4. Electric field and potential
+5. Gauss's law
+6. Capacitance
+7. Electric dipoles
+8. Energy in electric fields
+9. Conductors and insulators
+10. DC circuits (current, voltage, resistance)
+11. Ohm's law
+12. Resistor combinations
+13. Analysis of DC circuits (Kirchhoff's laws)
+14. Magnetic fields
+15. Lorentz force
+16. Biot-Savart and Ampère's laws
+17. Magnetic dipoles & Dielectrics
+18. Energy in magnetic fields
+19. Electromotive force (EMF)
+20. Electromagnetic induction, self and mutual inductances
+21. Faraday's and Lenz's laws
+22. Step-up and step-down transformers
+23. Maxwell's equations
+24. Electromagnetic oscillations and waves
+25. AC voltages and currents with inductors, capacitors, and resistors (RLC circuits)
+
+Your teaching style:
+- Give thorough, well-structured explanations using clear language
+- Always include key formulas with variable definitions
+- Provide multiple worked numerical examples with step-by-step solutions
+- Reference OAU exam patterns (Prof. M.A. Eleruja style — calculation-heavy, concept checks, derivations)
+- Use Nigerian student-friendly analogies where helpful
+- Highlight "exam traps" — common mistakes students make
+- Format with HTML tags for clear structure:
+  * Use <h2> for main sections
+  * Use <h3> for subsections
+  * Use <div class="formula">formula here</div> for equations
+  * Use <div class="example-box"><div class="ex-label">✏️ Worked Example</div>content</div> for examples
+  * Use <div class="oau-box"><div class="oau-label">🏛️ OAU Past Question Style</div>content</div> for exam-type questions
+  * Use <div class="tip-box"><div class="tip-label">💡 Exam Tip</div>content</div> for tips
+  * Use <p> for paragraphs, <ul>/<li> for lists
+- Be encouraging and confident. The student needs to ace their exam.`;
+
+  // ─── PANEL SWITCHING ─────────────────────────────────────────────────────
+  function showPanel(name) {
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('panel-' + name).classList.add('active');
+    const tabs = { overview: 0, teach: 1, chat: 2, quiz: 3 };
+    document.querySelectorAll('.tab-btn')[tabs[name]]?.classList.add('active');
+  }
+
+  // ─── TOPIC SELECTION ─────────────────────────────────────────────────────
+  function selectTopic(num, name) {
+    currentTopic = num;
+    currentTopicName = name;
+    document.getElementById('current-topic-title').textContent = `${num}. ${name}`;
+    document.querySelectorAll('.topic-item').forEach((el, i) => {
+      el.classList.toggle('active', i === num - 1);
+    });
+    // reset teach output
+    document.getElementById('teach-output').innerHTML = `
+      <div class="loading">
+        <span style="font-size:1.5rem">✅</span>
+        <span>Topic set to <strong style="color:var(--accent)">${name}</strong>. Click a button above to start learning!</span>
+      </div>`;
+    showPanel('teach');
+  }
+
+  // ─── API CALL ─────────────────────────────────────────────────────────────
+  async function callClaude(prompt, streamTarget) {
+    const box = document.getElementById(streamTarget || 'teach-output');
+    box.innerHTML = `<div class="loading"><div class="spinner"></div><span>AI is generating your notes…</span></div>`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': 'YOUR-API-KEY-HERE', 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 2500,
+          system: SYSTEM_PROMPT,
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      const text = data.content?.map(c => c.text || '').join('') || 'Sorry, could not get a response.';
+
+      box.innerHTML = `
+        <div class="ai-box-header">
+          <div class="ai-dot"></div>
+          AI TUTOR — PHY 102
+        </div>
+        <div class="ai-content">${text}</div>`;
+    } catch (e) {
+      box.innerHTML = `<div class="loading" style="color:var(--red)">⚠️ Error: ${e.message}</div>`;
+    }
+  }
+
+  // ─── TEACH ────────────────────────────────────────────────────────────────
+  function teachTopic() {
+    if (!currentTopicName) { alert('Please select a topic from the sidebar first.'); return; }
+    const prompt = `Teach me everything I need to know about "${currentTopicName}" for my PHY 102 exam at OAU (Obafemi Awolowo University).
+
+Please include:
+1. 📖 Full concept explanation with intuition
+2. 📐 All key formulas with variable definitions and units
+3. ✏️ At least 3 worked numerical examples with complete step-by-step solutions
+4. 🏛️ At least 2 OAU exam-style questions with solutions (the kind Prof. Eleruja would set)
+5. ⚠️ Common mistakes / exam traps to avoid
+6. 💡 Memory tricks and quick tips
+
+Be thorough — this student needs to ACE the exam. Don't leave anything out.`;
+    callClaude(prompt, 'teach-output');
+  }
+
+  function getOAUQuestions() {
+    if (!currentTopicName) { alert('Please select a topic from the sidebar first.'); return; }
+    const prompt = `Generate 5 OAU-style PHY 102 past exam questions on "${currentTopicName}" as set by Prof. M.A. Eleruja at Obafemi Awolowo University. 
+
+For each question:
+- State the question clearly (mix of theory and calculation)
+- Provide the complete solution with all working shown
+- Note the marks allocation style
+
+Make them challenging but fair, matching the difficulty level of OAU final exams.`;
+    callClaude(prompt, 'teach-output');
+  }
+
+  function getQuickSummary() {
+    if (!currentTopicName) { alert('Please select a topic from the sidebar first.'); return; }
+    const prompt = `Give me a quick, dense exam summary of "${currentTopicName}" for PHY 102 (OAU). 
+
+Format as:
+- Key definitions (2–4 lines each)
+- All formulas in one place
+- 3 most important things to remember
+- One quick worked example
+
+This is a last-minute revision summary. Make it concise but complete.`;
+    callClaude(prompt, 'teach-output');
+  }
+
+  // ─── CHAT ─────────────────────────────────────────────────────────────────
+  async function sendChat() {
+    const input = document.getElementById('chat-input');
+    const msg = input.value.trim();
+    if (!msg) return;
+
+    const messagesDiv = document.getElementById('chat-messages');
+    const sendBtn = document.getElementById('send-btn');
+
+    // Add user message
+    messagesDiv.innerHTML += `<div class="message user">${msg.replace(/\n/g,'<br>')}</div>`;
+    input.value = '';
+    input.style.height = '42px';
+    sendBtn.disabled = true;
+
+    chatHistory.push({ role: 'user', content: msg });
+
+    // Loading indicator
+    const loadingId = 'loading-' + Date.now();
+    messagesDiv.innerHTML += `<div class="message ai" id="${loadingId}"><div class="spinner" style="display:inline-block;width:16px;height:16px"></div> Thinking…</div>`;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': 'YOUR-API-KEY-HERE', 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1500,
+          system: SYSTEM_PROMPT,
+          messages: chatHistory
+        })
+      });
+
+      const data = await response.json();
+      const reply = data.content?.map(c => c.text || '').join('') || 'Sorry, something went wrong.';
+
+      chatHistory.push({ role: 'assistant', content: reply });
+
+      document.getElementById(loadingId).innerHTML = reply;
+    } catch (e) {
+      document.getElementById(loadingId).innerHTML = `<span style="color:var(--red)">⚠️ Error: ${e.message}</span>`;
+    }
+
+    sendBtn.disabled = false;
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+
+  // ─── QUIZ ─────────────────────────────────────────────────────────────────
+  function selectDiff(d) {
+    quizDifficulty = d;
+    document.querySelectorAll('.quiz-option-btn').forEach(b => b.classList.remove('selected'));
+    document.getElementById('diff-' + d).classList.add('selected');
+  }
+
+  async function startQuiz() {
+    const topicSelect = document.getElementById('quiz-topic-select');
+    const topic = topicSelect.value === 'all'
+      ? 'all topics in PHY 102 (Electrostatics, Coulombs Law, Gauss law, Capacitance, DC Circuits, Magnetic Fields, EM Induction, Maxwell equations, AC Circuits)'
+      : topicSelect.options[topicSelect.selectedIndex].text;
+
+    document.getElementById('quiz-setup').style.display = 'none';
+    document.getElementById('quiz-score').style.display = 'none';
+    document.getElementById('quiz-area').classList.add('active');
+    document.getElementById('questions-container').innerHTML = `<div class="loading"><div class="spinner"></div><span>Generating ${topic} questions…</span></div>`;
+    document.getElementById('quiz-next-area').style.display = 'none';
+
+    const diffMap = {
+      easy: 'conceptual multiple-choice questions (no heavy calculation, test understanding of definitions, laws, and concepts)',
+      medium: 'calculation-based multiple-choice questions with numerical answers',
+      hard: 'OAU exam-level questions matching the style of Prof. M.A. Eleruja, mix of concept and calculation, some may be tricky'
+    };
+
+    const prompt = `Generate exactly 5 ${diffMap[quizDifficulty]} for PHY 102 on ${topic} at OAU (Obafemi Awolowo University).
+
+Return ONLY valid JSON, no other text, no markdown. Format:
+{
+  "questions": [
+    {
+      "question": "Question text here",
+      "options": ["A. option1", "B. option2", "C. option3", "D. option4"],
+      "correct": 0,
+      "explanation": "Brief explanation of why the answer is correct and how to solve it"
+    }
+  ]
+}
+
+The "correct" field is the 0-based index of the correct option. Make sure exactly one option is correct. Questions should be clearly worded and physics-accurate.`;
+
+    try {
+      const response = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': 'YOUR-API-KEY-HERE', 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-20250514',
+          max_tokens: 1000,
+          system: 'You are a PHY 102 question generator for OAU. Return only valid JSON, no markdown, no explanation outside the JSON.',
+          messages: [{ role: 'user', content: prompt }]
+        })
+      });
+
+      const data = await response.json();
+      let text = data.content?.map(c => c.text || '').join('') || '{}';
+      text = text.replace(/```json|```/g, '').trim();
+      const parsed = JSON.parse(text);
+      quizQuestions = parsed.questions || [];
+
+      currentQ = 0;
+      score = 0;
+      renderQuestion();
+    } catch (e) {
+      document.getElementById('questions-container').innerHTML = `<div class="loading" style="color:var(--red)">⚠️ Error generating questions: ${e.message}. Please try again.</div>`;
+    }
+  }
+
+  function renderQuestion() {
+    if (currentQ >= quizQuestions.length) { showFinalScore(); return; }
+
+    answered = false;
+    const q = quizQuestions[currentQ];
+    document.getElementById('quiz-progress').textContent = `Question ${currentQ + 1} of ${quizQuestions.length}`;
+    document.getElementById('next-q-btn').style.display = 'none';
+    document.getElementById('finish-btn').style.display = 'none';
+    document.getElementById('quiz-next-area').style.display = 'block';
+
+    const opts = q.options.map((opt, i) => `
+      <button class="q-option" onclick="answerQ(${i})" id="opt-${i}">
+        <span class="opt-letter">${String.fromCharCode(65+i)}</span>
+        ${opt.replace(/^[A-D]\.\s*/,'')}
+      </button>`).join('');
+
+    document.getElementById('questions-container').innerHTML = `
+      <div class="question-card">
+        <div class="q-number">QUESTION ${currentQ + 1} / ${quizQuestions.length}</div>
+        <div class="q-text">${q.question}</div>
+        <div class="q-options">${opts}</div>
+        <div class="q-explanation" id="q-expl">${q.explanation}</div>
+      </div>`;
+  }
+
+  function answerQ(idx) {
+    if (answered) return;
+    answered = true;
+    const q = quizQuestions[currentQ];
+    const correct = q.correct;
+
+    document.querySelectorAll('.q-option').forEach((btn, i) => {
+      btn.disabled = true;
+      if (i === correct) btn.classList.add('correct');
+      else if (i === idx && idx !== correct) btn.classList.add('wrong');
+    });
+
+    if (idx === correct) score++;
+    document.getElementById('q-expl').classList.add('show');
+
+    if (currentQ < quizQuestions.length - 1) {
+      document.getElementById('next-q-btn').style.display = 'inline-flex';
+    } else {
+      document.getElementById('finish-btn').style.display = 'inline-flex';
+    }
+  }
+
+  function nextQuestion() {
+    currentQ++;
+    renderQuestion();
+  }
+
+  function showFinalScore() {
+    document.getElementById('quiz-area').classList.remove('active');
+    document.getElementById('quiz-score').style.display = 'block';
+    document.getElementById('score-display').textContent = `${score}/${quizQuestions.length}`;
+    const pct = (score / quizQuestions.length) * 100;
+    const msgs = [
+      [80, '🏆 Excellent! You\'re exam-ready!', '#10b981'],
+      [60, '📈 Good effort! Review the ones you missed.', '#f59e0b'],
+      [0,  '📖 Keep studying — you\'ve got this!', '#ef4444']
+    ];
+    const [, msg, color] = msgs.find(([min]) => pct >= min);
+    const el = document.getElementById('score-message');
+    el.textContent = msg;
+    el.style.color = color;
+  }
+
+  function resetQuiz() {
+    document.getElementById('quiz-setup').style.display = 'block';
+    document.getElementById('quiz-area').classList.remove('active');
+    document.getElementById('quiz-score').style.display = 'none';
+    quizQuestions = [];
+  }
+</script>
+</body>
+</html>
